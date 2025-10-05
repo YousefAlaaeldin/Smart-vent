@@ -7,15 +7,15 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from speechbrain.inference import EncoderClassifier
 
-# ============== CONFIG ==============
-TARGET_SR = 16000
-REC_DUR = 4.0          # seconds per sample
-TAKES = 4              # number of samples per user
-THRESH = 0.60          # match threshold
-PROFILES = Path("voice_profiles.json")
-INPUT_DEV = 14         # your mic index (update if needed)
 
-# ============== AUDIO SETUP ==============
+TARGET_SR = 16000
+REC_DUR = 4.0          
+TAKES = 4              
+THRESH = 0.60          
+PROFILES = Path("voice_profiles.json")
+INPUT_DEV = 14         
+
+
 def choose_samplerate(dev_idx, prefer=TARGET_SR):
     try:
         sd.check_input_settings(device=dev_idx, samplerate=prefer)
@@ -28,7 +28,7 @@ REC_SR = choose_samplerate(INPUT_DEV)
 sd.default.device = (INPUT_DEV, None)
 sd.default.channels = 1
 
-# ============== MODELS ==============
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 enc = EncoderClassifier.from_hparams("speechbrain/spkrec-ecapa-voxceleb",
                                      run_opts={"device": device})
@@ -36,7 +36,7 @@ vad_model, vad_utils = torch.hub.load('snakers4/silero-vad', 'silero_vad', trust
 vad_model.to(device).eval()
 get_speech_timestamps, _, _, _, collect_chunks = vad_utils
 
-# ============== HELPERS ==============
+
 def record_audio(seconds=REC_DUR):
     """Record audio for a given duration and resample to 16k."""
     x = sd.rec(int(seconds * REC_SR), dtype='float32')
@@ -70,7 +70,7 @@ def load_profiles():
 def save_profiles(p):
     PROFILES.write_text(json.dumps(p, indent=2))
 
-# ============== GUI APP ==============
+
 class VoiceApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -82,7 +82,7 @@ class VoiceApp(QWidget):
         self.title.setStyleSheet("font-size: 20px; font-weight: bold;")
         layout.addWidget(self.title)
 
-        # Buttons
+       
         btn_layout = QHBoxLayout()
         self.btn_enroll = QPushButton("➕ Enroll User")
         self.btn_identify = QPushButton("🔍 Identify Speaker")
@@ -104,7 +104,6 @@ class VoiceApp(QWidget):
         self.progress.setTextVisible(True)
         layout.addWidget(self.progress)
 
-        # Events
         self.btn_enroll.clicked.connect(self.enroll_user)
         self.btn_identify.clicked.connect(self.identify_user)
         self.btn_delete.clicked.connect(self.delete_user)
@@ -120,7 +119,7 @@ class VoiceApp(QWidget):
         if not profiles:
             self.status.setText("⚠️ No profiles registered yet.")
 
-    # ---------- Enroll ----------
+   
     def enroll_user(self):
         name, ok = QInputDialog.getText(self, "New User", "Enter user name:")
         if not ok or not name.strip():
@@ -143,7 +142,7 @@ class VoiceApp(QWidget):
         self.status.setText(f"✅ {name} enrolled successfully.")
         self.progress.setValue(0)
 
-    # ---------- Identify ----------
+    
     def identify_user(self):
         profiles = load_profiles()
         if not profiles:
@@ -163,7 +162,7 @@ class VoiceApp(QWidget):
                                 f"Best match: {name}\nScore: {score:.3f}\n{decision}")
         self.status.setText(f"🎯 Identified as {name} ({score:.3f})")
 
-    # ---------- Delete ----------
+    
     def delete_user(self):
         selected = self.list.currentItem()
         if not selected:
@@ -180,9 +179,10 @@ class VoiceApp(QWidget):
             self.refresh_profiles()
             self.status.setText(f"🗑 Deleted {name}.")
 
-# ============== RUN APP ==============
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = VoiceApp()
     win.show()
     sys.exit(app.exec())
+
