@@ -31,7 +31,7 @@ sd.default.device = (INPUT_DEV, None)
 sd.default.samplerate = REC_SR
 sd.default.channels = 1
 
-# -------- MODELS --------
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 enc = EncoderClassifier.from_hparams("speechbrain/spkrec-ecapa-voxceleb",
                                      run_opts={"device": device})
@@ -39,7 +39,7 @@ vad_model, vad_utils = torch.hub.load('snakers4/silero-vad', 'silero_vad', trust
 vad_model.to(device).eval()
 get_speech_timestamps, _, _, _, collect_chunks = vad_utils
 
-# -------- HELPERS --------
+
 def record(sec=REC_DUR):
     input(f"Press Enter → speak {sec:.1f}s… ")
     x = sd.rec(int(sec * REC_SR), dtype='float32'); sd.wait()
@@ -65,7 +65,7 @@ def cosine(a, b):
     b = b / (np.linalg.norm(b) + 1e-9)
     return float(np.dot(a, b))
 
-# -------- PUBLIC FUNCTION --------
+
 def identify_profile() -> str:
     """Identify the speaker and return a summary string."""
     if not PROFILES.exists():
@@ -78,23 +78,24 @@ def identify_profile() -> str:
     y = record()
     e = embed(y)
 
-    # Compare to all stored profiles
+   
     ranked = sorted(
         ((n, cosine(e, np.array(v))) for n, v in profiles.items()),
         key=lambda x: x[1],
         reverse=True
     )
 
-    name, score = ranked[0]              # ✅ now defined here
+    name, score = ranked[0]             
     decision = "✅ MATCH" if score >= THRESH else "⚠️ BELOW THRESHOLD"
 
     print(f"\nBest match → {name} (score={score:.3f})")
     print("Top 3:", ranked[:3])
     print("Decision:", decision)
 
-    # return for GUI display
+    
     return f"Best match: {name} (score={score:.3f}) | {decision}"
 
-# Optional: for standalone testing
+
 if __name__ == "__main__":
     print(identify_profile())
+
